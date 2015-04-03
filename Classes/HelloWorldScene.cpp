@@ -1,6 +1,7 @@
 #include "HelloWorldScene.h"
 #include "math/CCMath.h"
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -35,11 +36,29 @@ bool HelloWorld::init()
 	closeItem->setPosition(Vec2(origin.x + visibleSize.width - closeItem->getContentSize().width/2 ,
                                 origin.y + closeItem->getContentSize().height/2));
 
+	// total label
+	totalLabel = Label::createWithTTF("0", "fonts/Marker Felt.ttf", 30);
+	totalLabel->setColor(Color3B(255, 0, 0));
+	totalLabel->setPosition(visibleSize.width * 0.1, visibleSize.height * 0.9);
+	this->addChild(totalLabel);
+
+	// rest label
+	restLabel = Label::createWithTTF("0", "fonts/Marker Felt.ttf", 30);
+	restLabel->setColor(Color3B(255, 0, 0));
+	restLabel->setPosition(visibleSize.width * 0.1, visibleSize.height * 0.8);
+	this->addChild(restLabel);
+
+	// add fail label
+	failLabel = Label::createWithTTF("Game Over!!", "fonts/Marker Felt.ttf", 30);
+	failLabel->setColor(Color3B(255, 0, 0));
+	failLabel->setPosition(visibleSize.width * 0.5, visibleSize.height * 0.8);
+	this->addChild(failLabel);
+
 	// add replay label
-    replayLabel = Label::createWithTTF("Game Over!!\nPress to Continue.", "fonts/Marker Felt.ttf", 30);
+    replayLabel = Label::createWithTTF("Replay", "fonts/Marker Felt.ttf", 30);
 	replayLabel->setColor(Color3B(255, 0, 0));
 	auto replayItem = MenuItemLabel::create(replayLabel, CC_CALLBACK_1(HelloWorld::replayCallback, this));
-	replayItem->setPosition(visibleSize.width * 0.5, visibleSize.height * 0.8);
+	replayItem->setPosition(visibleSize.width * 0.9, visibleSize.height * 0.9);
 
 	auto menu = Menu::create(replayItem, closeItem, NULL);
     menu->setPosition(Vec2::ZERO);
@@ -64,13 +83,11 @@ bool HelloWorld::init()
     return true;
 }
 
-void HelloWorld::initGame(int _tingNum, float _rotateSpeed) {
-	// draw
-	drawTings();
-
-	rotateAngle = 0;
-	rotateSpeed = 1;
+void HelloWorld::initGame(int _tingNum, float _rotateSpeed, int _targetNum) {
+	rotateSpeed = _rotateSpeed;
 	tingNum = _tingNum;
+	targetNum = _targetNum;
+	rotateAngle = 0;
 	isRun = true;
 	minArc = 4 * asin(SMALL_CIRCLE_R / 200.0);
 
@@ -79,7 +96,12 @@ void HelloWorld::initGame(int _tingNum, float _rotateSpeed) {
 	for (int i = 0; i < tingNum; ++i)
 		tingArc.push_back(360.0 / tingNum * i * PPI);
 
-	replayLabel->setVisible(false);
+	stringstream ss, ss1;
+	ss << "Total: " << targetNum;
+	totalLabel->setString(ss.str());
+	ss1 << "Rest: " << (int)tingArc.size() - tingNum;
+	restLabel->setString(ss1.str());
+	failLabel->setVisible(false);
 }
 
 void HelloWorld::menuCloseCallback(Ref* pSender)
@@ -99,7 +121,7 @@ void HelloWorld::menuCloseCallback(Ref* pSender)
 void HelloWorld::replayCallback(Ref* pSender)
 {
 	if (isRun) return;
-	initGame(tingNum + 1, rotateSpeed + 1);
+	initGame(tingNum, rotateSpeed, targetNum);
 	isRun = true;
 }
 
@@ -107,6 +129,11 @@ bool HelloWorld::onTouchBegan(Touch* touch, Event  *event)
 {
 	_beginPos = touch->getLocation();
 	tingArc.push_back((180 + 360 - rotateAngle) % 360 * PPI);
+	stringstream ss, ss1;
+	ss << "Total: " << targetNum;
+	totalLabel->setString(ss.str());
+	ss1 << "Rest: " << (int)tingArc.size() - tingNum;
+	restLabel->setString(ss1.str());
 	return true;
 }
 
@@ -143,15 +170,21 @@ void HelloWorld::drawTings(void)
 
 			isRun = false;
 
-			replayLabel->setVisible(true);
+			failLabel->setVisible(true);
 
 			return;
 		}
+	}
+
+	// check if win
+	if (tingArc.size() == targetNum + tingNum ) {
+		initGame(tingNum + 1, rotateSpeed + 0.5, targetNum + 1);
 	}
 }
 
 void HelloWorld::scheCallback(float dt)
 {
+	if (!isRun) return;
 	rotateAngle += rotateSpeed;
 	if (rotateAngle > 360)
 		rotateAngle %= 360;

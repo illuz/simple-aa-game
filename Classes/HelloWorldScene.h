@@ -26,7 +26,7 @@ public:
 
 	void replayCallback(cocos2d::Ref* pSender);
 
-	void initGame(int _tingNum = 0, float _rotateSpeed = 1);
+	void initGame(int _tingNum = 0, float _rotateSpeed = 1, int _targetNum = 5);
 
 	// touch function
 	bool onTouchBegan(Touch* touches, Event  *event);
@@ -41,15 +41,22 @@ private:
 	// touch position
 	Vec2 _beginPos;
 
+	cocos2d::Label *restLabel;
+	cocos2d::Label *totalLabel;
+	cocos2d::Label *failLabel;
 	cocos2d::Label *replayLabel;
-	int rotateAngle;
+	
 	DrawNode *drawNode;
 
+	int rotateAngle;
 	float rotateSpeed;
-	float minArc;
 	int tingNum;
-	bool isRun;
+	int targetNum;
+
 	std::vector<float> tingArc;
+	float minArc;
+
+	bool isRun;
 
 	const float PPI = 3.1415 / 180;
 	const float LENGTH = 100;
